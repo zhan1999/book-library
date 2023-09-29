@@ -9,3 +9,4 @@ export default {
 	},
 	plugins: [css({output: "bundle.css"}), nodeResolve]
 }
+
