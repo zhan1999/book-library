@@ -18,5 +18,8 @@
     "eslint": "^8.50.0",
     "rollup": "^3.29.3",
     "rollup-plugin-import-css": "^3.3.4"
+  },
+  "dependencies": {
+    "on-change": "^4.0.2"
   }
 }
