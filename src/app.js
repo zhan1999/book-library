@@ -9,7 +9,9 @@ class App {
 	];
 
 	appState = {
-		favorites: []
+		favorites: [],
+		offsetFavorites: 0,
+		booksPerPage: 3
 	};
 
 

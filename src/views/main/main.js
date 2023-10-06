@@ -11,7 +11,7 @@ export class MainView extends AbstractView{
 		numFound: 0,
 		loading: false,
 		searchQuery: undefined,
-		offset: 0
+		offset: 0,
 	};
 
 	constructor(appState) {
@@ -27,9 +27,9 @@ export class MainView extends AbstractView{
 		onChange.unsubscribe(this.state);
 	}
 
-
 	appStateHook(path) {
 		if (path === 'favorites') {
+			console.log("main appState changed, pagination?");
 			this.render();
 			console.log(path);
 		}
@@ -50,6 +50,10 @@ export class MainView extends AbstractView{
 			this.render();
 		}
 
+		if (path === 'offset') {
+			this.render();
+		}
+
 	}
 
 	async loadList(q, offset){
@@ -58,6 +62,7 @@ export class MainView extends AbstractView{
 	}
 
 	render() {
+
 		const main = document.createElement('div');
 		main.innerHTML = `
 			<h1>Found ${this.state.numFound} books </h1>
@@ -67,6 +72,10 @@ export class MainView extends AbstractView{
 		this.app.innerHTML = '';
 		this.app.append(main);
 		this.renderHeader();
+
+		console.log("rendering main view...");
+
+
 	}
 
 	renderHeader() {

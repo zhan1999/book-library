@@ -1125,6 +1125,69 @@
 		}
 	}
 
+	class Pagination extends DivComponent {
+		constructor(appState, state) {
+			super();
+			this.appState = appState;
+			this.state = state;
+		}
+		
+		prevPage() {
+			if (location.hash === '#favorites')
+			{
+				if (this.appState.offsetFavorites < this.appState.booksPerPage)
+					return;
+				else
+					this.appState.offsetFavorites -= this.appState.booksPerPage;
+					return;
+			}
+			else 
+			{
+				if (this.state.offset < this.appState.booksPerPage)
+					return;
+				else
+					this.state.offset -= this.appState.booksPerPage;
+					return;
+			}	
+		}
+
+		nextPage() {
+
+			console.log("next page called");
+
+			console.log("location.hash ",location.hash);
+
+			if (location.hash === '#favorites')
+			{
+				console.log("this.appState.offsetFavorites ", this.appState.offsetFavorites);
+				this.appState.offsetFavorites += this.appState.booksPerPage;
+				console.log("this.appState.offsetFavorites ", this.appState.offsetFavorites);
+
+			}
+			else 
+			{
+				this.state.offset += this.appState.booksPerPage;
+			}	
+		}
+
+		render() {
+			this.el.classList.add('pagination');
+			this.el.innerHTML = `
+			<div class="pagination">
+				<span class="prev__link" href="#">Previous page</span>
+				<span class="next__link" href="#">Next page</span>
+			</div>
+		`;
+
+			this.el.getElementsByClassName("prev__link")[0].addEventListener('click', this.prevPage.bind(this));
+			this.el.getElementsByClassName("next__link")[0].addEventListener('click', this.nextPage.bind(this));
+
+			console.log("pagination rendered");
+
+			return this.el;
+		}
+	}
+
 	class CardList extends DivComponent {
 		constructor(appState, parentState) {
 			super();
@@ -1141,16 +1204,54 @@
 			const cardGrid = document.createElement('div');
 			cardGrid.classList.add('card_grid');
 			this.el.append(cardGrid);
-			for (const card of this.parentState.list){
-				cardGrid.append(new Card(this.appState, card).render());
+
+			// for (const card of this.parentState.list){
+			// 	cardGrid.append(new Card(this.appState, card).render());
+			// }
+
+			console.log("location.hash = ", location.hash);
+			console.log("this.parentstate", this.parentState);
+			console.log("this.parentstate.list", this.parentState.list);
+			console.log("this.parentstate.list[0]", this.parentState.list[0]);
+			console.log("this.appState.favorites.length", this.appState.favorites.length);		
+			
+			const booksPerPage = this.appState.booksPerPage;
+			const favLength = this.appState.favorites.length;
+			let offset = this.parentState.offset;
+			let numberToShow = this.parentState.list.length < booksPerPage ? this.parentState.list.length : booksPerPage;
+
+			if (location.hash === '#favorites'){
+				offset = this.appState.offsetFavorites;
+	//			numberToShow = favLength < booksPerPage ? favLength : favLength % booksPerPage;
+				numberToShow = favLength < booksPerPage ? favLength : booksPerPage;
 			}
+
+			console.log("booksPerPage", booksPerPage);
+			console.log("offset", offset);
+			console.log("number to show", numberToShow);
+
+
+			for (let c = offset; c < (offset + numberToShow); c++){
+
+					console.log("appending new Card");
+
+				if (this.parentState.list.length !== 0){
+
+					cardGrid.append(new Card(this.appState, this.parentState.list[c]).render());
+				}
+			}
+			cardGrid.append(new Pagination(this.appState, this.parentState).render());
 
 			return this.el;
 		}
 	}
 
 	class FavoritesView extends AbstractView{
-		
+
+		// state = {
+		// 	offsetFavorites: 0
+		// };
+
 		constructor(appState) {
 			super();
 			this.appState = appState;
@@ -1164,24 +1265,33 @@
 
 
 		appStateHook(path) {
-			if (path === 'favorites') {
+			if (path === 'favorites' || path === 'offsetFavorites') {
+				console.log("favorites appState changed, pagination?");
 				this.render();
-				console.log(path);
 			}
 		}
 
 
 		render() {
+
 			const main = document.createElement('div');
 
 			main.innerHTML = `
 			<h1>Favorites </h1>
 		`;
 
-			main.append(new CardList(this.appState, { list: this.appState.favorites}).render());
+			main.append(new CardList(this.appState, { 
+				list: this.appState.favorites,
+				offsetFavorites: this.appState.offsetFavorites,
+				booksPerPage: this.appState.booksPerPage
+			}).render());
+
 			this.app.innerHTML = '';
 			this.app.append(main);
 			this.renderHeader();
+
+			console.log("rendering favorites view...");
+
 		}
 
 		renderHeader() {
@@ -1199,6 +1309,9 @@
 		}
 
 		search() {
+
+			console.log("search this.state",this.state);
+
 			const value = this.el.querySelector('input').value;
 			this.state.searchQuery = value;
 		}
@@ -1237,7 +1350,7 @@
 			numFound: 0,
 			loading: false,
 			searchQuery: undefined,
-			offset: 0
+			offset: 0,
 		};
 
 		constructor(appState) {
@@ -1253,9 +1366,9 @@
 			onChange.unsubscribe(this.state);
 		}
 
-
 		appStateHook(path) {
 			if (path === 'favorites') {
+				console.log("main appState changed, pagination?");
 				this.render();
 				console.log(path);
 			}
@@ -1276,6 +1389,10 @@
 				this.render();
 			}
 
+			if (path === 'offset') {
+				this.render();
+			}
+
 		}
 
 		async loadList(q, offset){
@@ -1284,6 +1401,7 @@
 		}
 
 		render() {
+
 			const main = document.createElement('div');
 			main.innerHTML = `
 			<h1>Found ${this.state.numFound} books </h1>
@@ -1293,6 +1411,10 @@
 			this.app.innerHTML = '';
 			this.app.append(main);
 			this.renderHeader();
+
+			console.log("rendering main view...");
+
+
 		}
 
 		renderHeader() {
@@ -1311,7 +1433,9 @@
 		];
 
 		appState = {
-			favorites: []
+			favorites: [],
+			offsetFavorites: 0,
+			booksPerPage: 3
 		};
 
 
